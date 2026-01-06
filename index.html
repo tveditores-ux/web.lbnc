@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f4c5c">
+<title>VIDA – Líderes</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div id="app" class="app">
+<header class="topbar">
+<div class="topbar-left">
+<div class="dot"></div>
+<div class="brand">
+<div class="brand-title">VIDA</div>
+<div class="brand-sub">App para líderes</div>
+</div>
+</div>
+<div class="topbar-right">
+<button class="iconbtn" id="btnText" title="Tamaño de letra" aria-label="Tamaño de letra">Aa</button>
+<button class="iconbtn" id="btnLogout" title="Salir" aria-label="Salir">⎋</button>
+</div>
+</header>
+
+<main class="main">
+<section id="screenLogin" class="screen">
+<div class="card">
+<h1>Entrar</h1>
+<p class="muted">Escribe tu clave de acceso.</p>
+<label class="lbl" for="accessKey">Clave de acceso</label>
+<input id="accessKey" class="input" inputmode="text" autocomplete="off" placeholder="clave de acceso">
+<button id="btnEnter" class="btn">solo entrar</button>
+<p id="loginMsg" class="msg" role="status" aria-live="polite"></p>
+</div>
+</section>
+
+<section id="screenApp" class="screen hidden">
+<div class="tabs">
+<button class="tab active" data-tab="lessons">Lecciones</button>
+<button class="tab" data-tab="music">Música</button>
+<button class="tab" data-tab="devos">Devocional</button>
+<button class="tab" data-tab="alarms">Alarmas</button>
+<button class="tab" data-tab="log">Bitácora</button>
+</div>
+
+<section class="panel" id="tab-lessons">
+<div class="panel-head">
+<h2>Etapa de Equipo</h2>
+<div class="pill" id="userPill"></div>
+</div>
+
+<div class="lesson">
+<div class="lesson-title">Semana 1: VER – La Compasión que Mueve al Equipo</div>
+<div class="lesson-meta">Texto base: Mateo 9:36 · Juan 4:35</div>
+<div class="lesson-body">
+<p>En esta semana, enfoca la reunión en despertar sensibilidad espiritual y amor práctico dentro del equipo.</p>
+<p class="muted">Preliminar: aquí luego insertamos todo tu texto completo por secciones, con formato limpio.</p>
+</div>
+<button class="btn ghost" id="btnReadLesson">Escuchar</button>
+</div>
+</section>
+
+<section class="panel hidden" id="tab-music">
+<h2>Música</h2>
+<p class="muted">Carga un audio local o pega un link luego si deseas.</p>
+<div class="card">
+<label class="lbl" for="audioUrl">URL de audio (mp3)</label>
+<input id="audioUrl" class="input" placeholder="pega un link mp3">
+<div class="row">
+<button class="btn" id="btnLoadAudio">Cargar</button>
+<button class="btn ghost" id="btnStopAudio">Detener</button>
+</div>
+<audio id="audioPlayer" controls class="audio"></audio>
+</div>
+</section>
+
+<section class="panel hidden" id="tab-devos">
+<h2>Devocional</h2>
+<div class="card">
+<div class="muted">Hoy</div>
+<h3 class="h3">Cristo en ti, esperanza viva</h3>
+<p>Respira. No estás sosteniendo tu vida con tus fuerzas. Estás siendo sostenido.</p>
+<button class="btn ghost" id="btnReadDevo">Escuchar</button>
+</div>
+</section>
+
+<section class="panel hidden" id="tab-alarms">
+<h2>Alarmas</h2>
+<p class="muted">Preliminar local: recordatorio dentro del navegador.</p>
+<div class="card">
+<label class="lbl" for="alarmMinutes">Recuérdame en (minutos)</label>
+<input id="alarmMinutes" class="input" inputmode="numeric" placeholder="ej: 30">
+<button class="btn" id="btnSetAlarm">Crear recordatorio</button>
+<p id="alarmMsg" class="msg" role="status" aria-live="polite"></p>
+</div>
+</section>
+
+<section class="panel hidden" id="tab-log">
+<h2>Bitácora</h2>
+<div class="card">
+<label class="lbl" for="logText">Escribe tu nota</label>
+<textarea id="logText" class="textarea" placeholder="lo que Dios te mostró, lo que viste en la gente, lo que ajustarías..."></textarea>
+<div class="row">
+<button class="btn" id="btnSaveLog">Guardar</button>
+<button class="btn ghost" id="btnClearLog">Limpiar</button>
+</div>
+</div>
+<div class="card">
+<div class="muted">Guardado</div>
+<div id="logList" class="loglist"></div>
+</div>
+</section>
+
+</section>
+</main>
+
+<footer class="bottombar hidden" id="bottomBar">
+<div class="hint">Modo preliminar</div>
+</footer>
+</div>
+
+<div class="sheet hidden" id="textSheet" role="dialog" aria-modal="true">
+<div class="sheet-card">
+<div class="sheet-head">
+<div class="sheet-title">Tamaño de letra</div>
+<button class="iconbtn" id="btnCloseSheet" aria-label="Cerrar">×</button>
+</div>
+<input id="fontRange" type="range" min="14" max="22" step="1">
+<div class="muted" id="fontLabel"></div>
+</div>
+</div>
+
+<script src="./app.js"></script>
+</body>
+</html>
