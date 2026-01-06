@@ -1,224 +1,57 @@
-(() => {
-const ALLOWED_KEYS = [
-"escalona.pablo@gmail.com",
-"pastor.sequera@gmail.com",
-"Jesuthbelisario@gmail.com",
-"Yamileta@gmail.com",
-"rosatorealba@gmail.com",
-"rosatorrealba316@gmail.com"
+const S={key:k=>`vida_${k}`,get(k,f){try{return JSON.parse(localStorage.getItem(this.key(k)))??f}catch{return f}},set(k,v){localStorage.setItem(this.key(k),JSON.stringify(v));toast("Guardado")}};
+let toastTimer=null;function toast(m){const t=document.querySelector(".toast");if(!t)return;t.textContent=m;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),1500)}
+function show(p){document.querySelectorAll(".view").forEach(v=>v.classList.add("hide"));document.getElementById(p).classList.remove("hide");document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));document.querySelector(`.tab[data-target='${p}']`).classList.add("active");history.replaceState({}, "", `#${p}`)}
+window.addEventListener("load",()=>{const h=location.hash?.replace("#","")||"home";show(h);if("serviceWorker"in navigator){navigator.serviceWorker.register("./sw.js")}
+initLessons();initBitacora();initTasks();initReminders();initFs();initRecursos();initLogos()});
+document.addEventListener("click",e=>{const tab=e.target.closest(".tab");if(tab){e.preventDefault();show(tab.dataset.target)}});
+
+function initLessons(){[1,2,3,4].forEach(w=>{const ns=`lesson_${w}`;const d=S.get(ns,{testimonios:"",lugar:"",hora:""});const t=document.getElementById(`testimonios_${w}`),l=document.getElementById(`lugar_${w}`),h=document.getElementById(`hora_${w}`);if(t)t.value=d.testimonios;if(l)l.value=d.lugar;if(h)h.value=d.hora;const b=document.getElementById(`save_${w}`);if(b){b.addEventListener("click",()=>{S.set(ns,{testimonios:t.value,lugar:l.value,hora:h.value})})}})}
+
+const BIT_ITEMS=[
+"Fomento amistad y oración mutua entre los miembros.",
+"Mantengo el enfoque en Aprender (fe, visión, unidad).",
+"Descubro y animo los dones de cada persona.",
+"Delego pequeñas tareas para involucrar a todos.",
+"Transmito que la misión pertenece al equipo, no solo a mí.",
+"Motivo a invitar nuevos amigos y celebro sus esfuerzos.",
+"Acompaño a mi grupo en los entrenamientos de la iglesia.",
+"Oro por crecimiento espiritual y relaciones sanas."
 ];
+function currentWeekKey(){const d=new Date(),onejan=new Date(d.getFullYear(),0,1);const week=Math.ceil((((d-onejan)/86400000)+onejan.getDay()+1)/7);return `${d.getFullYear()}-W${week}`}
+function initBitacora(){const w=currentWeekKey(),store=S.get("bitacora",{}),week=store[w]||BIT_ITEMS.map(()=>({done:false}));const wrap=document.getElementById("bitacora_checks");wrap.innerHTML="";BIT_ITEMS.forEach((label,i)=>{const row=document.createElement("div");row.className="checkrow";row.innerHTML=`<input type="checkbox" id="b_${i}" ${week[i].done?"checked":""}/><label for="b_${i}" style="flex:1">${label}</label>`;wrap.appendChild(row);row.querySelector("input").addEventListener("change",e=>{week[i].done=e.target.checked;store[w]=week;S.set("bitacora",store)})});document.getElementById("bit_note").value=(S.get("bit_notes",{})[w]||"");document.getElementById("save_bit").addEventListener("click",()=>{const notes=S.get("bit_notes",{});notes[w]=document.getElementById("bit_note").value.trim();S.set("bit_notes",notes);renderHistory()});renderHistory()}
+function renderHistory(){const hist=document.getElementById("bit_hist");const store=S.get("bitacora",{}),notes=S.get("bit_notes",{});const keys=Object.keys(store).sort().reverse().slice(0,8);hist.innerHTML=keys.map(k=>{const arr=store[k];const pct=Math.round(100*(arr.filter(x=>x.done).length/arr.length));const note=(notes[k]||"").replace(/</g,"&lt;");return `<div class="card"><strong>${k}</strong><div class="small">${pct}% completado — ${note||"Sin notas"}</div></div>`}).join("")||`<div class="card small">Sin histórico aún.</div>`}
 
-const $ = (id) => document.getElementById(id);
+const DEFAULT_TASKS=["Llamar a los miembros del grupo","Orar por ellos","Asistir a la reunión con su líder","Llenar el libro de formatos","Entregar ofrendas","Asistir al servicio de miércoles","Asistir al servicio de domingo"];
+function initTasks(){let tasks=S.get("tasks",null);if(!tasks){tasks=DEFAULT_TASKS.map(t=>({title:t,done:false}));S.set("tasks",tasks)}renderTasks(tasks);document.getElementById("add_task_btn").addEventListener("click",()=>{const v=document.getElementById("add_task").value.trim();if(!v)return;tasks.push({title:v,done:false});S.set("tasks",tasks);document.getElementById("add_task").value="";renderTasks(tasks)});document.getElementById("reset_week").addEventListener("click",()=>{tasks.forEach(t=>t.done=false);S.set("tasks",tasks);renderTasks(tasks)})}
+function renderTasks(tasks){const wrap=document.getElementById("tasks_list");wrap.innerHTML="";tasks.forEach((t,i)=>{const row=document.createElement("div");row.className="checkrow";row.innerHTML=`<input type="checkbox" id="t_${i}" ${t.done?"checked":""}/><label for="t_${i}" style="flex:1">${t.title}</label><button class="btn ghost" data-r="${i}" title="Eliminar">✕</button>`;wrap.appendChild(row);row.querySelector("input").addEventListener("change",e=>{t.done=e.target.checked;S.set("tasks",tasks)});row.querySelector("button").addEventListener("click",()=>{tasks.splice(i,1);S.set("tasks",tasks);renderTasks(tasks)})})}
 
-const state = {
-user: localStorage.getItem("vida_user") || "",
-font: parseInt(localStorage.getItem("vida_font") || "16", 10)
-};
+function initReminders(){const cfg=S.get("reminders",{grupo:{weekday:"3",time:"19:00"},miercoles:{time:"19:00"},domingo:{time:"10:00"},pre:[60,10]});document.getElementById("r_grupo_day").value=cfg.grupo.weekday;document.getElementById("r_grupo_time").value=cfg.grupo.time;document.getElementById("r_mie_time").value=cfg.miercoles.time;document.getElementById("r_dom_time").value=cfg.domingo.time;document.getElementById("r_pre").value=cfg.pre.join(",");document.getElementById("save_reminders").addEventListener("click",async()=>{cfg.grupo.weekday=document.getElementById("r_grupo_day").value;cfg.grupo.time=document.getElementById("r_grupo_time").value;cfg.miercoles.time=document.getElementById("r_mie_time").value;cfg.domingo.time=document.getElementById("r_dom_time").value;cfg.pre=document.getElementById("r_pre").value.split(",").map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));S.set("reminders",cfg);if("Notification"in window){const p=await Notification.requestPermission();toast(p==="granted"?"Notificaciones activadas":"Notificaciones no autorizadas")}});setInterval(()=>checkReminders(),60000);checkReminders()}
+function checkReminders(){const cfg=S.get("reminders",null);if(!cfg)return;const now=new Date();const events=[...nextWeekly(now,parseInt(cfg.grupo.weekday),cfg.grupo.time,cfg.pre,"Reunión de Grupo"),...nextWeekly(now,3,cfg.miercoles.time,cfg.pre,"Servicio de Miércoles"),...nextWeekly(now,0,cfg.domingo.time,cfg.pre,"Servicio de Domingo")];events.forEach(ev=>{const diffMin=(ev.when-now)/60000;if(diffMin<=0&&diffMin>-1)fireNotification(ev.title,ev.body)})}
+function nextWeekly(now,weekday,timeStr,pres,title){const [hh,mm]=timeStr.split(":").map(Number);let next=new Date(now);next.setHours(hh,mm,0,0);const day=next.getDay();let delta=(weekday-day);if(delta<0||(delta===0&&next<=now))delta+=7;next.setDate(next.getDate()+delta);return pres.map(mins=>({when:new Date(next.getTime()-mins*60000),title,body:`Recordatorio (${mins} min antes)`}))}
+async function fireNotification(title,body){if(!("Notification"in window))return;if(Notification.permission!=="granted")return;if(navigator.serviceWorker?.controller){navigator.serviceWorker.controller.postMessage({type:"notify",title,body})}else{new Notification(title,{body})}}
 
-function setFont(px){
-const v = Math.max(14, Math.min(22, px));
-document.documentElement.style.setProperty("--fs", v + "px");
-localStorage.setItem("vida_font", String(v));
-state.font = v;
-$("fontRange").value = String(v);
-$("fontLabel").textContent = v + " px";
-}
+const FS_LEVELS=[1,1.1,1.22,1.35];function setFs(i){i=Math.max(0,Math.min(FS_LEVELS.length-1,i));document.documentElement.style.setProperty("--fs",FS_LEVELS[i]);S.set("fs_idx",i)}
+function initFs(){const idx=S.get("fs_idx",0);setFs(idx);document.getElementById("fs_minus").addEventListener("click",()=>setFs((S.get("fs_idx",0))-1));document.getElementById("fs_plus").addEventListener("click",()=>setFs((S.get("fs_idx",0))+1))}
 
-function show(id){
-$("screenLogin").classList.add("hidden");
-$("screenApp").classList.add("hidden");
-$(id).classList.remove("hidden");
-$("bottomBar").classList.toggle("hidden", id !== "screenApp");
-}
+function initRecursos(){
+  let audios=S.get("audios",[]);
+  const aWrap=document.getElementById("audio_list"),aUrl=document.getElementById("audio_url"),aAdd=document.getElementById("audio_add");
+  function renderAudios(){aWrap.innerHTML=audios.map((u,i)=>`<div class="card"><audio controls src="${u}" style="width:100%"></audio><div class="small">${u}</div><div><button class="btn ghost" data-i="${i}">Eliminar</button></div></div>`).join("")||`<div class="card small">Sin audios aún.</div>`;aWrap.querySelectorAll("button[data-i]").forEach(b=>b.addEventListener("click",()=>{const i=parseInt(b.dataset.i);audios.splice(i,1);S.set("audios",audios);renderAudios()}))}
+  aAdd.addEventListener("click",()=>{const u=aUrl.value.trim();if(!u)return;audios.push(u);S.set("audios",audios);aUrl.value="";renderAudios()});renderAudios();
 
-function login(userKey){
-const key = (userKey || "").trim();
-const ok = ALLOWED_KEYS.includes(key);
-if(!ok){
-$("loginMsg").textContent = "Clave inválida. Revisa mayúsculas y espacios.";
-return;
-}
-state.user = key;
-localStorage.setItem("vida_user", key);
-$("loginMsg").textContent = "";
-$("userPill").textContent = key;
-show("screenApp");
+  let files=S.get("files",[]);
+  const fWrap=document.getElementById("file_list"),fTitle=document.getElementById("file_title"),fUrl=document.getElementById("file_url"),fAdd=document.getElementById("file_add");
+  function renderFiles(){fWrap.innerHTML=files.map((it,i)=>`<div class="checkrow"><a href="${it.url}" target="_blank">${it.title}</a><button class="btn ghost" data-i="${i}">✕</button></div>`).join("")||`<div class="card small">Sin materiales aún.</div>`;fWrap.querySelectorAll("button[data-i]").forEach(b=>b.addEventListener("click",()=>{const i=parseInt(b.dataset.i);files.splice(i,1);S.set("files",files);renderFiles()}))}
+  fAdd.addEventListener("click",()=>{const t=fTitle.value.trim(),u=fUrl.value.trim();if(!t||!u)return;files.push({title:t,url:u});S.set("files",files);fTitle.value="";fUrl.value="";renderFiles()});renderFiles();
+
+  let members=S.get("members",[]);
+  const mWrap=document.getElementById("members_list"),mName=document.getElementById("member_name"),mPhone=document.getElementById("member_phone"),mAdd=document.getElementById("member_add");
+  function renderMembers(){mWrap.innerHTML=members.map((m,i)=>`<div class="checkrow"><div style="flex:1"><strong>${m.name}</strong><div class="small">${m.phone||""}</div></div><button class="btn ghost" data-i="${i}">✕</button></div>`).join("")||`<div class="card small">Aún no hay miembros registrados.</div>`;mWrap.querySelectorAll("button[data-i]").forEach(b=>b.addEventListener("click",()=>{const i=parseInt(b.dataset.i);members.splice(i,1);S.set("members",members);renderMembers()}))}
+  mAdd.addEventListener("click",()=>{const n=mName.value.trim(),p=mPhone.value.trim();if(!n)return;members.push({name:n,phone:p});S.set("members",members);mName.value="";mPhone.value="";renderMembers()});renderMembers()
 }
 
-function logout(){
-localStorage.removeItem("vida_user");
-state.user = "";
-$("accessKey").value = "";
-show("screenLogin");
-}
+async function fileToDataURL(file){return await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)})}
+function applyLogos(){const iglesia=S.get("logo_iglesia",null);const elI=document.getElementById("logo-iglesia");if(elI && iglesia){elI.src=iglesia}}
+function initLogos(){applyLogos();const upI=document.getElementById("up_logo_iglesia"),save=document.getElementById("save_logos"),clear=document.getElementById("clear_logos");if(save){save.addEventListener("click",async()=>{try{if(upI?.files?.[0])S.set("logo_iglesia",await fileToDataURL(upI.files[0]));applyLogos();toast("Logo guardado")}catch(e){toast("No se pudo guardar el logo")}})}if(clear){clear.addEventListener("click",()=>{localStorage.removeItem(S.key("logo_iglesia"));toast("Logo eliminado (se muestra el predeterminado)")})}}
 
-function switchTab(name){
-document.querySelectorAll(".tab").forEach(b => {
-b.classList.toggle("active", b.dataset.tab === name);
-});
-["lessons","music","devos","alarms","log"].forEach(t => {
-$("tab-" + t).classList.toggle("hidden", t !== name);
-});
-}
 
-function speak(text){
-if(!("speechSynthesis" in window)) return;
-const u = new SpeechSynthesisUtterance(text);
-u.lang = "es-VE";
-u.rate = 1;
-u.pitch = 1;
-window.speechSynthesis.cancel();
-window.speechSynthesis.speak(u);
-}
-
-function stopSpeak(){
-if(!("speechSynthesis" in window)) return;
-window.speechSynthesis.cancel();
-}
-
-function initTabs(){
-document.querySelectorAll(".tab").forEach(b => {
-b.addEventListener("click", () => switchTab(b.dataset.tab));
-});
-}
-
-function initMusic(){
-$("btnLoadAudio").addEventListener("click", () => {
-const url = $("audioUrl").value.trim();
-if(!url) return;
-$("audioPlayer").src = url;
-$("audioPlayer").play().catch(() => {});
-});
-$("btnStopAudio").addEventListener("click", () => {
-$("audioPlayer").pause();
-$("audioPlayer").currentTime = 0;
-});
-}
-
-function initLog(){
-const key = "vida_log_" + (state.user || "anon");
-const load = () => {
-const raw = localStorage.getItem(key) || "[]";
-let items = [];
-try{ items = JSON.parse(raw); }catch{ items = []; }
-const wrap = $("logList");
-wrap.innerHTML = "";
-items.slice().reverse().forEach(it => {
-const d = document.createElement("div");
-d.className = "logitem";
-d.innerHTML = `<div class="t">${it.t}</div><div>${escapeHtml(it.m)}</div>`;
-wrap.appendChild(d);
-});
-};
-const save = () => {
-const msg = ($("logText").value || "").trim();
-if(!msg) return;
-const raw = localStorage.getItem(key) || "[]";
-let items = [];
-try{ items = JSON.parse(raw); }catch{ items = []; }
-items.push({ t:new Date().toLocaleString("es-VE"), m:msg });
-localStorage.setItem(key, JSON.stringify(items));
-$("logText").value = "";
-load();
-};
-$("btnSaveLog").addEventListener("click", save);
-$("btnClearLog").addEventListener("click", () => {
-$("logText").value = "";
-});
-document.querySelector('[data-tab="log"]').addEventListener("click", load);
-load();
-}
-
-function escapeHtml(s){
-return String(s)
-.replaceAll("&","&amp;")
-.replaceAll("<","&lt;")
-.replaceAll(">","&gt;");
-}
-
-function initAlarms(){
-$("btnSetAlarm").addEventListener("click", async () => {
-const mins = parseInt(($("alarmMinutes").value || "0").trim(), 10);
-if(!mins || mins < 1){
-$("alarmMsg").textContent = "Coloca un número válido de minutos.";
-return;
-}
-if("Notification" in window){
-const p = await Notification.requestPermission();
-if(p !== "granted"){
-$("alarmMsg").textContent = "Sin permiso de notificaciones. Haré un aviso en pantalla.";
-}
-}
-$("alarmMsg").textContent = "Listo. Te aviso en " + mins + " min.";
-setTimeout(() => {
-notify("VIDA", "Recordatorio: respira, revisa tu enfoque, y sigue.");
-}, mins * 60 * 1000);
-});
-}
-
-function notify(title, body){
-try{
-if("Notification" in window && Notification.permission === "granted"){
-new Notification(title, { body });
-return;
-}
-}catch{}
-alert(title + "\n\n" + body);
-}
-
-function initTextSize(){
-$("btnText").addEventListener("click", () => {
-$("textSheet").classList.remove("hidden");
-});
-$("btnCloseSheet").addEventListener("click", () => {
-$("textSheet").classList.add("hidden");
-});
-$("textSheet").addEventListener("click", (e) => {
-if(e.target.id === "textSheet") $("textSheet").classList.add("hidden");
-});
-$("fontRange").addEventListener("input", (e) => {
-setFont(parseInt(e.target.value, 10));
-});
-setFont(state.font);
-}
-
-function initSpeech(){
-$("btnReadLesson").addEventListener("click", () => {
-speak("Semana uno. La compasión que mueve al equipo. En esta semana, despierta sensibilidad espiritual y amor práctico dentro del equipo.");
-});
-$("btnReadDevo").addEventListener("click", () => {
-speak("Devocional. Cristo en ti, esperanza viva. Respira. No estás sosteniendo tu vida con tus fuerzas. Estás siendo sostenido.");
-});
-window.addEventListener("beforeunload", stopSpeak);
-}
-
-function initAuth(){
-$("btnEnter").addEventListener("click", () => login($("accessKey").value));
-$("accessKey").addEventListener("keydown", (e) => {
-if(e.key === "Enter") login($("accessKey").value);
-});
-$("btnLogout").addEventListener("click", logout);
-}
-
-function initSW(){
-if("serviceWorker" in navigator){
-navigator.serviceWorker.register("./sw.js").catch(() => {});
-}
-}
-
-initAuth();
-initTabs();
-initMusic();
-initAlarms();
-initTextSize();
-initSpeech();
-initSW();
-
-if(state.user){
-$("userPill").textContent = state.user;
-show("screenApp");
-}else{
-show("screenLogin");
-}
-switchTab("lessons");
-})();
